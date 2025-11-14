@@ -24,16 +24,21 @@ async def fetch_yesterday_messages(group_username_or_id):
     yesterday_start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday_end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
     
-    async with TelegramClient('session_name', int(api_id), api_hash) as client:
-        await client.start(phone=phone)
-        
-        if not await client.is_user_authorized():
-            print("⚠️  You need to authorize this app.")
-            print("Please check your Telegram app for the login code.")
-        
-        print("✅ Authenticated successfully!")
-        
-        await fetch_and_display_messages(client, group_username_or_id, yesterday_start, yesterday_end)
+    client = TelegramClient('session_name', int(api_id), api_hash)
+    await client.connect()
+    
+    if not await client.is_user_authorized():
+        print("❌ Not authorized! You need to authenticate first.")
+        print("This requires interactive authentication (entering a code from Telegram).")
+        print("Please run this locally or in an interactive terminal first.")
+        await client.disconnect()
+        return
+    
+    print("✅ Authenticated successfully!")
+    
+    await fetch_and_display_messages(client, group_username_or_id, yesterday_start, yesterday_end)
+    
+    await client.disconnect()
 
 async def fetch_and_display_messages(client, group_username_or_id, yesterday_start, yesterday_end):
     print(f"\n📥 Fetching messages from: {group_username_or_id}")
