@@ -3,30 +3,41 @@
 ## Overview
 Automated system that fetches messages from Telegram groups you're in (without needing admin access or bot permissions). Uses your personal Telegram account via the Telegram Client API (MTProto).
 
-**Current State**: Phase 1 Complete ✅ - Fully functional message fetching and display from any day.
+**Current State**: Phase 2 Complete ✅ - Fully functional message fetching AND AI-powered summarization!
 
 ## Recent Changes
-- **2025-11-14**: Phase 1 Complete - Fully Working!
-  - ✅ Telethon library installed and configured
-  - ✅ Authentication working successfully  
-  - ✅ Message fetching tested and confirmed (300+ messages fetched from @bulletproofscale)
-  - ✅ Flexible day selection (today, yesterday, or any day)
-  - ✅ Proper UTC timezone handling for accurate date ranges
-  - ✅ Session file created and persisted (no need to login each time)
+- **2025-11-14**: Phase 2 Complete - AI Summarization Working!
+  - ✅ Integrated OpenAI GPT-4o via Replit AI Integrations (no API key needed)
+  - ✅ Created summarize.py for intelligent message summarization
+  - ✅ Successfully tested with 448 messages - generates excellent summaries
+  - ✅ Extracts key topics, insights, action items, and important contributors
+  - ✅ Phase 1: Message fetching fully functional
+  - ✅ Telegram authentication persisted via session file
 
 ## Project Architecture
 
-### Current Implementation (Phase 1) ✅
-- **main.py**: Core script that:
+### Current Implementation ✅
+
+**Phase 1: Message Fetching**
+- **main.py**: Raw message display
   - Authenticates using your Telegram account (session persisted)
   - Fetches ALL messages from any specified day (no limits)
   - Displays messages with timestamps and sender names
   - Handles text messages and indicates media/stickers
   - Flexible day selection: today, yesterday, or X days ago
 
+**Phase 2: AI Summarization** ✅
+- **summarize.py**: Intelligent AI-powered summaries
+  - Fetches messages from specified day
+  - Sends to GPT-4o for analysis
+  - Generates executive summary, key topics, notable insights
+  - Extracts action items and highlights important contributors
+  - Perfect for daily digests of active groups
+
 ### Dependencies
 - Python 3.11
 - Telethon 1.42.0 (Telegram MTProto client library)
+- OpenAI 2.8.0 (AI summarization via Replit AI Integrations)
 
 ### How It Works
 1. Uses your personal Telegram API credentials to authenticate
@@ -42,32 +53,42 @@ Automated system that fetches messages from Telegram groups you're in (without n
 - Authentication completed (session file created)
 - Tested with @bulletproofscale group
 
-### Running the Script
+### Running the Scripts
 
 Open the **Shell** tab in Replit and use these commands:
 
-**Get today's messages:**
+#### Option 1: AI Summary (Recommended) 🤖
+
+**Get AI summary of today's messages:**
+```bash
+python summarize.py @bulletproofscale 0
+```
+
+**Get AI summary of yesterday's messages (default):**
+```bash
+python summarize.py @bulletproofscale
+```
+
+**Get AI summary from 2 days ago:**
+```bash
+python summarize.py @bulletproofscale 2
+```
+
+#### Option 2: Raw Messages (for reference)
+
+**View today's raw messages:**
 ```bash
 python main.py @bulletproofscale 0
 ```
 
-**Get yesterday's messages (default):**
-```bash
-python main.py @bulletproofscale
-```
-or
+**View yesterday's raw messages:**
 ```bash
 python main.py @bulletproofscale 1
 ```
 
-**Get messages from 2 days ago:**
-```bash
-python main.py @bulletproofscale 2
-```
-
 **Any other group:**
 ```bash
-python main.py @yourgroupname 0
+python summarize.py @yourgroupname 0
 ```
 
 ### Finding Group Username or ID
@@ -82,11 +103,6 @@ python main.py @yourgroupname 0
 
 ## Next Phases
 
-### Phase 2: AI Summarization (Not Yet Implemented)
-- Integrate with GPT-4 or another AI model
-- Generate intelligent summaries of daily messages
-- Extract key points, action items, and important discussions
-
 ### Phase 3: Delivery Options (Not Yet Implemented)
 - Send summary to your Telegram DMs
 - Post to Make/Zapier webhook
@@ -100,10 +116,13 @@ python main.py @yourgroupname 0
 - Fully automated daily summaries
 
 ## Files
-- `main.py` - Main script for fetching messages
+- `main.py` - Fetch and display raw messages
+- `summarize.py` - Fetch messages and generate AI summary (Phase 2) ✅
+- `authenticate.py` - One-time authentication script
 - `pyproject.toml` - Python project configuration
 - `uv.lock` - Dependency lock file
 - `.gitignore` - Excludes session files and Python artifacts
+- `session_name.session` - Telegram session (gitignored)
 
 ## Security Notes
 - Session files contain authentication tokens - they are gitignored

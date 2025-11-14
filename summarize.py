@@ -81,32 +81,32 @@ async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
     
     return messages, day_label
 
-def create_summary_prompt(messages, day_label):
+def create_summary_prompt(messages, day_label, group_name):
     """Create the prompt for AI summarization."""
     messages_text = "\n".join([
         f"[{msg['time']}] {msg['sender']}: {msg['text']}"
         for msg in reversed(messages)
     ])
     
-    prompt = f"""You are analyzing messages from a Telegram group called "Bulletproof Scaling" from {day_label}.
+    prompt = f"""You are analyzing messages from a Telegram group "{group_name}" from {day_label}.
 
-This is a high-level marketing, scaling, and business strategy group. Please provide:
+Please analyze these messages and provide:
 
-1. **Executive Summary** (2-3 sentences): The most important takeaways
-2. **Key Topics Discussed**: Main themes and subjects covered
-3. **Notable Insights**: Specific strategies, tips, or valuable information shared
-4. **Action Items**: Any recommendations, tools, or resources mentioned
+1. **Executive Summary** (2-3 sentences): The most important takeaways from today's discussion
+2. **Key Topics Discussed**: Main themes and subjects that came up
+3. **Notable Insights**: Specific strategies, tips, advice, or valuable information shared
+4. **Action Items**: Any recommendations, tools, resources, or next steps mentioned
 5. **Important People/Mentions**: Key contributors and what they shared
 
 Here are the messages (oldest to newest):
 
 {messages_text}
 
-Please be concise but thorough. Focus on actionable insights and strategic value."""
+Please be concise but thorough. Focus on actionable insights and the most valuable information shared in the conversation."""
     
     return prompt
 
-def generate_summary(messages, day_label):
+def generate_summary(messages, day_label, group_name):
     """Generate AI summary using OpenAI."""
     if not messages:
         print("❌ No messages to summarize!")
@@ -119,13 +119,13 @@ def generate_summary(messages, day_label):
         base_url=os.getenv('AI_INTEGRATIONS_OPENAI_BASE_URL')
     )
     
-    prompt = create_summary_prompt(messages, day_label)
+    prompt = create_summary_prompt(messages, day_label, group_name)
     
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an expert at analyzing business and marketing discussions and extracting actionable insights."},
+                {"role": "system", "content": "You are an expert at analyzing group conversations and extracting the most valuable and actionable insights from discussions."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -167,7 +167,7 @@ async def main():
         print(f"No messages found for {day_label}")
         sys.exit(0)
     
-    summary = generate_summary(messages, day_label)
+    summary = generate_summary(messages, day_label, group)
     
     if summary:
         print("=" * 80)
