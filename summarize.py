@@ -2,17 +2,20 @@
 """
 AI-powered Telegram message summarizer.
 Fetches messages from a specified day and generates an intelligent summary.
+Supports delivery via Telegram DM, webhook, or email.
 """
 
 import os
 import sys
+import argparse
 from datetime import datetime, timedelta, timezone
 from telethon import TelegramClient
 import asyncio
 from openai import OpenAI
+from delivery import deliver_summary
 
 async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
-    """Fetch messages from Telegram for summarization."""
+    """Fetch messages from Telegram for summarization. Returns (messages, day_label, client)."""
     api_id = os.getenv('TELEGRAM_API_ID')
     api_hash = os.getenv('TELEGRAM_API_HASH')
     phone = os.getenv('TELEGRAM_PHONE')
@@ -33,8 +36,8 @@ async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
     
     if not await client.is_user_authorized():
         print("❌ Not authorized! Please run: python authenticate.py")
-        client.disconnect()
-        return None, None
+        await client.disconnect()
+        return None, None, None
     
     print("✅ Authenticated!")
     print(f"\n📥 Fetching messages from: {group_username_or_id}")
@@ -71,15 +74,13 @@ async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
     
     except Exception as e:
         print(f"❌ Error fetching messages: {e}")
-        client.disconnect()
-        return None, None
-    
-    client.disconnect()
+        await client.disconnect()
+        return None, None, None
     
     day_label = "today" if (datetime.now(timezone.utc).date() == day_start.date()) else day_start.strftime('%Y-%m-%d')
     print(f"✅ Fetched {message_count} messages from {day_label}\n")
     
-    return messages, day_label
+    return messages, day_label, client
 
 def create_summary_prompt(messages, day_label, group_name):
     """Create the prompt for AI summarization."""
@@ -150,47 +151,85 @@ def generate_summary(messages, day_label, group_name):
         return None
 
 async def main():
-    if len(sys.argv) < 2:
-        print("📋 Usage: python summarize.py <group_username_or_id> [days_ago]")
-        print("\nExamples:")
-        print("  python summarize.py @bulletproofscale          # Summarize yesterday's messages")
-        print("  python summarize.py @bulletproofscale 0        # Summarize today's messages")
-        print("  python summarize.py @bulletproofscale 2        # Summarize messages from 2 days ago")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description='AI-powered Telegram message summarizer with delivery options',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python summarize.py @bulletproofscale                    # Yesterday's summary (console)
+  python summarize.py @bulletproofscale 0                  # Today's summary (console)
+  python summarize.py @bulletproofscale --deliver telegram # Send to your Telegram DM
+  python summarize.py @bulletproofscale --deliver webhook  # POST to webhook
+  python summarize.py @bulletproofscale --deliver telegram,webhook  # Multiple delivery methods
+  
+Environment Variables:
+  SUMMARY_WEBHOOK_URL   - Default webhook URL
+  SUMMARY_EMAIL_TO      - Default email recipient
+  SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS - Email configuration
+        """
+    )
     
-    group = sys.argv[1]
-    days_ago = 1
+    parser.add_argument('group', help='Telegram group username (e.g., @bulletproofscale) or ID')
+    parser.add_argument('days_ago', nargs='?', type=int, default=1,
+                       help='Days ago to summarize (0=today, 1=yesterday, default: 1)')
+    parser.add_argument('--deliver', '-d', type=str,
+                       help='Delivery methods (comma-separated): telegram, webhook, email')
+    parser.add_argument('--webhook-url', type=str,
+                       help='Webhook URL (overrides SUMMARY_WEBHOOK_URL)')
+    parser.add_argument('--email-to', type=str,
+                       help='Email recipient (overrides SUMMARY_EMAIL_TO)')
     
-    if len(sys.argv) >= 3:
-        try:
-            days_ago = int(sys.argv[2])
-        except ValueError:
-            print("❌ Error: days_ago must be a number (0 for today, 1 for yesterday, etc.)")
-            sys.exit(1)
+    args = parser.parse_args()
     
-    messages, day_label = await fetch_messages_for_summary(group, days_ago)
+    messages, day_label, client = await fetch_messages_for_summary(args.group, args.days_ago)
     
     if messages is None:
+        if client:
+            await client.disconnect()
         sys.exit(1)
     
     if len(messages) == 0:
         print(f"No messages found for {day_label}")
+        if client:
+            await client.disconnect()
         sys.exit(0)
     
-    summary = generate_summary(messages, day_label, group)
+    summary = generate_summary(messages, day_label, args.group)
     
-    if summary:
-        print("=" * 80)
-        print(f"📊 SUMMARY - {day_label.upper()}")
-        print("=" * 80)
-        print()
-        print(summary)
-        print()
-        print("=" * 80)
-        print(f"✅ Summary complete! ({len(messages)} messages analyzed)")
-    else:
+    if not summary:
         print("❌ Failed to generate summary")
+        if client:
+            await client.disconnect()
         sys.exit(1)
+    
+    print("=" * 80)
+    print(f"📊 SUMMARY - {day_label.upper()}")
+    print("=" * 80)
+    print()
+    print(summary)
+    print()
+    print("=" * 80)
+    print(f"✅ Summary complete! ({len(messages)} messages analyzed)")
+    
+    if args.deliver:
+        print()
+        delivery_methods = [m.strip() for m in args.deliver.split(',')]
+        results = await deliver_summary(
+            summary=summary,
+            group_name=args.group,
+            day_label=day_label,
+            delivery_methods=delivery_methods,
+            telegram_client=client,
+            webhook_url=args.webhook_url,
+            email_to=args.email_to
+        )
+        
+        success_count = sum(1 for success in results.values() if success)
+        total_count = len(results)
+        print(f"\n📬 Delivery: {success_count}/{total_count} successful")
+    
+    if client:
+        await client.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(main())
