@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from telethon import TelegramClient
 from telethon.tl.types import Channel, Chat
 import asyncio
@@ -20,7 +20,7 @@ async def fetch_yesterday_messages(group_username_or_id):
     
     print("🔐 Authenticating with Telegram...")
     
-    yesterday = datetime.now() - timedelta(days=1)
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     yesterday_start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday_end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
     
@@ -46,7 +46,8 @@ async def fetch_and_display_messages(client, group_username_or_id, yesterday_sta
         async for message in client.iter_messages(
             group_username_or_id,
             offset_date=yesterday_end,
-            reverse=True
+            reverse=True,
+            limit=None
         ):
             if message.date < yesterday_start:
                 break
@@ -89,17 +90,24 @@ async def fetch_and_display_messages(client, group_username_or_id, yesterday_sta
     print("\n✅ Done!")
 
 def main():
-    if len(sys.argv) < 2:
+    group = None
+    
+    if len(sys.argv) >= 2:
+        group = sys.argv[1]
+    elif os.getenv('TELEGRAM_GROUP'):
+        group = os.getenv('TELEGRAM_GROUP')
+    else:
         print("📋 Usage: python main.py <group_username_or_id>")
         print("\nExamples:")
         print("  python main.py @publicgroupname")
         print("  python main.py -1001234567890")
+        print("\nOr set TELEGRAM_GROUP environment variable:")
+        print("  export TELEGRAM_GROUP=@publicgroupname")
+        print("  python main.py")
         print("\nTo find a group ID:")
         print("  1. Forward a message from the group to @userinfobot on Telegram")
         print("  2. It will show you the chat ID")
         sys.exit(1)
-    
-    group = sys.argv[1]
     
     asyncio.run(fetch_yesterday_messages(group))
 
