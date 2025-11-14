@@ -114,9 +114,19 @@ def generate_summary(messages, day_label, group_name):
     
     print("🤖 Generating AI summary with GPT-4o...\n")
     
+    api_key = os.getenv('AI_INTEGRATIONS_OPENAI_API_KEY')
+    base_url = os.getenv('AI_INTEGRATIONS_OPENAI_BASE_URL')
+    
+    if not api_key or not base_url:
+        print("❌ Missing OpenAI integration credentials!")
+        print(f"API Key present: {bool(api_key)}")
+        print(f"Base URL present: {bool(base_url)}")
+        print("\nPlease ensure the Replit AI Integration is properly set up.")
+        return None
+    
     client = OpenAI(
-        api_key=os.getenv('AI_INTEGRATIONS_OPENAI_API_KEY'),
-        base_url=os.getenv('AI_INTEGRATIONS_OPENAI_BASE_URL')
+        api_key=api_key,
+        base_url=base_url
     )
     
     prompt = create_summary_prompt(messages, day_label, group_name)
