@@ -27,15 +27,14 @@ async def authenticate():
     
     await client.start(
         phone=phone,
-        code_callback=lambda: input('Enter the code you received: '),
-        password_callback=lambda: input('Enter your 2FA password (if enabled): ')
+        code_callback=lambda: input('Enter the code you received: ')
     )
     
     print("\n✅ Authentication successful!")
     print("✅ Session file created!")
     print("\nYou can now run: python main.py @bulletproofscale")
     
-    await client.disconnect()
+    client.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(authenticate())
