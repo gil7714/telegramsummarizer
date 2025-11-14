@@ -5,7 +5,7 @@ from telethon import TelegramClient
 from telethon.tl.types import Channel, Chat
 import asyncio
 
-async def fetch_yesterday_messages(group_username_or_id):
+async def fetch_messages(group_username_or_id, days_ago=0):
     api_id = os.getenv('TELEGRAM_API_ID')
     api_hash = os.getenv('TELEGRAM_API_HASH')
     phone = os.getenv('TELEGRAM_PHONE')
@@ -20,9 +20,9 @@ async def fetch_yesterday_messages(group_username_or_id):
     
     print("🔐 Authenticating with Telegram...")
     
-    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
-    yesterday_start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-    yesterday_end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
+    target_day = datetime.now(timezone.utc) - timedelta(days=days_ago)
+    day_start = target_day.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = target_day.replace(hour=23, minute=59, second=59, microsecond=999999)
     
     client = TelegramClient('session_name', int(api_id), api_hash)
     await client.connect()
@@ -36,13 +36,13 @@ async def fetch_yesterday_messages(group_username_or_id):
     
     print("✅ Authenticated successfully!")
     
-    await fetch_and_display_messages(client, group_username_or_id, yesterday_start, yesterday_end)
+    await fetch_and_display_messages(client, group_username_or_id, day_start, day_end)
     
     client.disconnect()
 
-async def fetch_and_display_messages(client, group_username_or_id, yesterday_start, yesterday_end):
+async def fetch_and_display_messages(client, group_username_or_id, day_start, day_end):
     print(f"\n📥 Fetching messages from: {group_username_or_id}")
-    print(f"📅 Date range: {yesterday_start.strftime('%Y-%m-%d %H:%M')} to {yesterday_end.strftime('%Y-%m-%d %H:%M')}")
+    print(f"📅 Date range: {day_start.strftime('%Y-%m-%d %H:%M')} to {day_end.strftime('%Y-%m-%d %H:%M')}")
     
     messages = []
     message_count = 0
@@ -50,14 +50,12 @@ async def fetch_and_display_messages(client, group_username_or_id, yesterday_sta
     try:
         async for message in client.iter_messages(
             group_username_or_id,
-            offset_date=yesterday_end,
-            reverse=True,
             limit=None
         ):
-            if message.date < yesterday_start:
-                break
-            if message.date > yesterday_end:
+            if message.date > day_end:
                 continue
+            if message.date < day_start:
+                break
                 
             message_count += 1
             
@@ -83,7 +81,8 @@ async def fetch_and_display_messages(client, group_username_or_id, yesterday_sta
         print(f"❌ Error fetching messages: {e}")
         return
     
-    print(f"\n📊 Found {message_count} messages from yesterday\n")
+    day_label = "today" if (datetime.now(timezone.utc).date() == day_start.date()) else day_start.strftime('%Y-%m-%d')
+    print(f"\n📊 Found {message_count} messages from {day_label}\n")
     print("=" * 80)
     
     for msg in messages:
@@ -96,16 +95,18 @@ async def fetch_and_display_messages(client, group_username_or_id, yesterday_sta
 
 def main():
     group = None
+    days_ago = 1
     
     if len(sys.argv) >= 2:
         group = sys.argv[1]
     elif os.getenv('TELEGRAM_GROUP'):
         group = os.getenv('TELEGRAM_GROUP')
     else:
-        print("📋 Usage: python main.py <group_username_or_id>")
+        print("📋 Usage: python main.py <group_username_or_id> [days_ago]")
         print("\nExamples:")
-        print("  python main.py @publicgroupname")
-        print("  python main.py -1001234567890")
+        print("  python main.py @bulletproofscale          # Yesterday's messages")
+        print("  python main.py @bulletproofscale 0        # Today's messages")
+        print("  python main.py @bulletproofscale 2        # Messages from 2 days ago")
         print("\nOr set TELEGRAM_GROUP environment variable:")
         print("  export TELEGRAM_GROUP=@publicgroupname")
         print("  python main.py")
@@ -114,7 +115,14 @@ def main():
         print("  2. It will show you the chat ID")
         sys.exit(1)
     
-    asyncio.run(fetch_yesterday_messages(group))
+    if len(sys.argv) >= 3:
+        try:
+            days_ago = int(sys.argv[2])
+        except ValueError:
+            print("❌ Error: days_ago must be a number (0 for today, 1 for yesterday, etc.)")
+            sys.exit(1)
+    
+    asyncio.run(fetch_messages(group, days_ago))
 
 if __name__ == "__main__":
     main()

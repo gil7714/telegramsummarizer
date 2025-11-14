@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+One-time authentication script for Telegram.
+Run this only if you need to create a new session or re-authenticate.
+"""
+
 import os
 import sys
 from telethon import TelegramClient
@@ -25,16 +31,22 @@ async def authenticate():
     
     client = TelegramClient('session_name', int(api_id), api_hash)
     
-    await client.start(
-        phone=phone,
-        code_callback=lambda: input('Enter the code you received: ')
-    )
-    
-    print("\n✅ Authentication successful!")
-    print("✅ Session file created!")
-    print("\nYou can now run: python main.py @bulletproofscale")
-    
-    client.disconnect()
+    try:
+        await client.start(
+            phone=phone,
+            code_callback=lambda: input('Enter the code you received: ')
+        )
+        
+        print("\n✅ Authentication successful!")
+        print("✅ Session file created!")
+        print("\nYou can now run: python main.py @bulletproofscale 0")
+        
+    except KeyboardInterrupt:
+        print("\n\n❌ Authentication cancelled by user")
+    except Exception as e:
+        print(f"\n❌ Authentication failed: {e}")
+    finally:
+        await client.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(authenticate())

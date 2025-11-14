@@ -36,7 +36,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python main.py"
+args = "echo \"📋 Telegram Message Fetcher - Ready!\" && echo \"\" && echo \"Run in Shell:\" && echo \"  python main.py @bulletproofscale 0    # Today's messages\" && echo \"  python main.py @bulletproofscale 1    # Yesterday's messages\" && echo \"\" && tail -f /dev/null"
 
 [workflows.workflow.metadata]
 outputType = "console"

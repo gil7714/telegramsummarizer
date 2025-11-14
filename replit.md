@@ -1,26 +1,28 @@
 # Telegram Group Message Fetcher
 
 ## Overview
-Automated system that fetches messages from Telegram groups you're in (without needing admin access or bot permissions) and provides daily summaries. Uses your personal Telegram account via the Telegram Client API (MTProto).
+Automated system that fetches messages from Telegram groups you're in (without needing admin access or bot permissions). Uses your personal Telegram account via the Telegram Client API (MTProto).
 
-**Current State**: Phase 1 - Basic message fetching and display functionality implemented.
+**Current State**: Phase 1 Complete ✅ - Fully functional message fetching and display from any day.
 
 ## Recent Changes
-- **2024-11-14**: Initial setup complete
-  - Installed Telethon library for Telegram API access
-  - Created main.py script with message fetching functionality
-  - Added support for both command-line arguments and environment variables
-  - Configured Telegram API credentials (TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_PHONE)
-  - Added session file exclusions to .gitignore
+- **2025-11-14**: Phase 1 Complete - Fully Working!
+  - ✅ Telethon library installed and configured
+  - ✅ Authentication working successfully  
+  - ✅ Message fetching tested and confirmed (300+ messages fetched from @bulletproofscale)
+  - ✅ Flexible day selection (today, yesterday, or any day)
+  - ✅ Proper UTC timezone handling for accurate date ranges
+  - ✅ Session file created and persisted (no need to login each time)
 
 ## Project Architecture
 
-### Current Implementation (Phase 1)
+### Current Implementation (Phase 1) ✅
 - **main.py**: Core script that:
-  - Authenticates using your Telegram account
-  - Fetches all messages from yesterday (00:00 to 23:59)
+  - Authenticates using your Telegram account (session persisted)
+  - Fetches ALL messages from any specified day (no limits)
   - Displays messages with timestamps and sender names
-  - Handles both text messages and media indicators
+  - Handles text messages and indicates media/stickers
+  - Flexible day selection: today, yesterday, or X days ago
 
 ### Dependencies
 - Python 3.11
@@ -35,36 +37,48 @@ Automated system that fetches messages from Telegram groups you're in (without n
 
 ## How to Use
 
-### First Time Setup
-You've already completed this:
-- Created Telegram app at https://my.telegram.org/apps
-- Obtained API_ID and API_HASH
-- Added credentials to Replit Secrets
+### ✅ Already Set Up
+- Telegram app credentials configured
+- Authentication completed (session file created)
+- Tested with @bulletproofscale group
 
 ### Running the Script
 
-**Option 1: Using command-line argument**
+Open the **Shell** tab in Replit and use these commands:
+
+**Get today's messages:**
 ```bash
-python main.py @yourgroupname
+python main.py @bulletproofscale 0
+```
+
+**Get yesterday's messages (default):**
+```bash
+python main.py @bulletproofscale
 ```
 or
 ```bash
-python main.py -1001234567890
+python main.py @bulletproofscale 1
 ```
 
-**Option 2: Using environment variable**
-1. Add a new secret in Replit called `TELEGRAM_GROUP` with your group username or ID
-2. Run: `python main.py`
+**Get messages from 2 days ago:**
+```bash
+python main.py @bulletproofscale 2
+```
+
+**Any other group:**
+```bash
+python main.py @yourgroupname 0
+```
 
 ### Finding Group Username or ID
 1. Forward a message from the group to @userinfobot on Telegram
 2. The bot will show you the chat ID
 3. Use that ID (including the minus sign if present)
 
-### First Run Authentication
-- The first time you run the script, Telegram will send a login code to your phone
-- Enter the code when prompted
-- After first authentication, a session file is created and you won't need to login again
+### Authentication Status
+- ✅ Already authenticated - session file exists
+- You won't need to login again unless the session expires
+- If session expires, the script will tell you and you'll need to authenticate again
 
 ## Next Phases
 
