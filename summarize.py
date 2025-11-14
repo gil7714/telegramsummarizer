@@ -10,6 +10,7 @@ import sys
 import argparse
 from datetime import datetime, timedelta, timezone
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 import asyncio
 from openai import OpenAI
 from delivery import deliver_summary
@@ -19,10 +20,16 @@ async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
     api_id = os.getenv('TELEGRAM_API_ID')
     api_hash = os.getenv('TELEGRAM_API_HASH')
     phone = os.getenv('TELEGRAM_PHONE')
+    session_string = os.getenv('TELEGRAM_SESSION')
     
-    if not api_id or not api_hash or not phone:
+    if not api_id or not api_hash:
         print("❌ Missing Telegram credentials!")
-        print("Please set: TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_PHONE")
+        print("Please set: TELEGRAM_API_ID, TELEGRAM_API_HASH")
+        sys.exit(1)
+    
+    if not session_string and not phone:
+        print("❌ Missing authentication!")
+        print("Please set either: TELEGRAM_SESSION (for automation) or TELEGRAM_PHONE (for local use)")
         sys.exit(1)
     
     print("🔐 Authenticating with Telegram...")
@@ -31,7 +38,11 @@ async def fetch_messages_for_summary(group_username_or_id, days_ago=0):
     day_start = target_day.replace(hour=0, minute=0, second=0, microsecond=0)
     day_end = target_day.replace(hour=23, minute=59, second=59, microsecond=999999)
     
-    client = TelegramClient('session_name', int(api_id), api_hash)
+    if session_string:
+        client = TelegramClient(StringSession(session_string), int(api_id), api_hash)
+    else:
+        client = TelegramClient('session_name', int(api_id), api_hash)
+    
     await client.connect()
     
     if not await client.is_user_authorized():
