@@ -3,14 +3,16 @@
 ## Overview
 Automated system that fetches messages from Telegram groups you're in (without needing admin access or bot permissions). Uses your personal Telegram account via the Telegram Client API (MTProto).
 
-**Current State**: Phase 2 Complete ✅ - Fully functional message fetching AND AI-powered summarization!
+**Current State**: Phase 3 Complete ✅ - Message fetching, AI summarization, AND automated delivery!
 
 ## Recent Changes
-- **2025-11-14**: Phase 2 Complete - AI Summarization Working!
-  - ✅ Integrated OpenAI GPT-4o via Replit AI Integrations (no API key needed)
-  - ✅ Created summarize.py for intelligent message summarization
-  - ✅ Successfully tested with 448 messages - generates excellent summaries
-  - ✅ Extracts key topics, insights, action items, and important contributors
+- **2025-11-14**: Phase 3 Complete - Automated Delivery Working!
+  - ✅ Created modular delivery system (delivery/ module)
+  - ✅ Telegram DM delivery - sends summaries to your Saved Messages
+  - ✅ Webhook delivery - POST summaries to Make/Zapier/n8n/etc
+  - ✅ Email delivery support (SMTP)
+  - ✅ Support for multiple simultaneous delivery methods
+  - ✅ Phase 2: AI Summarization with GPT-4o
   - ✅ Phase 1: Message fetching fully functional
   - ✅ Telegram authentication persisted via session file
 
@@ -33,6 +35,14 @@ Automated system that fetches messages from Telegram groups you're in (without n
   - Generates executive summary, key topics, notable insights
   - Extracts action items and highlights important contributors
   - Perfect for daily digests of active groups
+
+**Phase 3: Automated Delivery** ✅
+- **delivery/**: Modular delivery system
+  - Telegram DM - sends to your Saved Messages
+  - Webhook - POST to Make/Zapier/n8n/custom endpoints
+  - Email - SMTP delivery support
+  - Multiple delivery methods can run simultaneously
+  - Simple command-line flags to control delivery
 
 ### Dependencies
 - Python 3.11
@@ -57,16 +67,16 @@ Automated system that fetches messages from Telegram groups you're in (without n
 
 Open the **Shell** tab in Replit and use these commands:
 
-#### Option 1: AI Summary (Recommended) 🤖
+#### Option 1: AI Summary to Console (Default) 🖥️
+
+**Get AI summary of yesterday's messages:**
+```bash
+python summarize.py @bulletproofscale
+```
 
 **Get AI summary of today's messages:**
 ```bash
 python summarize.py @bulletproofscale 0
-```
-
-**Get AI summary of yesterday's messages (default):**
-```bash
-python summarize.py @bulletproofscale
 ```
 
 **Get AI summary from 2 days ago:**
@@ -74,7 +84,29 @@ python summarize.py @bulletproofscale
 python summarize.py @bulletproofscale 2
 ```
 
-#### Option 2: Raw Messages (for reference)
+#### Option 2: Automated Delivery 📬
+
+**Send to your Telegram DM (Saved Messages):**
+```bash
+python summarize.py @bulletproofscale --deliver telegram
+```
+
+**Send to a webhook (Make/Zapier/n8n):**
+```bash
+python summarize.py @bulletproofscale --deliver webhook --webhook-url https://your-webhook-url
+```
+
+**Send via email:**
+```bash
+python summarize.py @bulletproofscale --deliver email --email-to you@example.com
+```
+
+**Multiple delivery methods at once:**
+```bash
+python summarize.py @bulletproofscale --deliver telegram,webhook
+```
+
+#### Option 3: Raw Messages (for reference)
 
 **View today's raw messages:**
 ```bash
@@ -101,23 +133,34 @@ python summarize.py @yourgroupname 0
 - You won't need to login again unless the session expires
 - If session expires, the script will tell you and you'll need to authenticate again
 
-## Next Phases
+## Delivery Configuration
 
-### Phase 3: Delivery Options (Not Yet Implemented)
-- Send summary to your Telegram DMs
-- Post to Make/Zapier webhook
-- Email delivery
-- Slack integration
-- Discord integration
+### Environment Variables (Optional)
+
+For webhook delivery:
+- `SUMMARY_WEBHOOK_URL` - Default webhook URL for automatic delivery
+
+For email delivery:
+- `SUMMARY_EMAIL_TO` - Default recipient email address
+- `SMTP_HOST` - SMTP server hostname (e.g., smtp.gmail.com)
+- `SMTP_PORT` - SMTP server port (default: 587)
+- `SMTP_USER` - SMTP username/email
+- `SMTP_PASS` - SMTP password or app-specific password
+- `SMTP_FROM` - Sender email address (optional, defaults to SMTP_USER)
+
+You can also pass these as command-line arguments instead of environment variables.
+
+## Next Phases
 
 ### Phase 4: Automation (Not Yet Implemented)
 - Set up daily scheduled runs
 - Options: GitHub Actions, Replit cron, or cloud VPS
-- Fully automated daily summaries
+- Fully automated daily summaries delivered to your inbox/DM every morning
 
 ## Files
 - `main.py` - Fetch and display raw messages
 - `summarize.py` - Fetch messages and generate AI summary (Phase 2) ✅
+- `delivery/__init__.py` - Modular delivery system for Telegram DM, webhooks, email (Phase 3) ✅
 - `authenticate.py` - One-time authentication script
 - `pyproject.toml` - Python project configuration
 - `uv.lock` - Dependency lock file

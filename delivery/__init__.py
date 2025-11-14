@@ -76,7 +76,7 @@ def post_webhook(summary: str, group_name: str, day_label: str, webhook_url: Opt
         )
         
         with urllib.request.urlopen(req, timeout=30) as response:
-            if response.status == 200:
+            if 200 <= response.status < 300:
                 return True
             else:
                 print(f"❌ Webhook delivery failed: HTTP {response.status}")
