@@ -31,6 +31,7 @@ jobs:
         TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
         AI_INTEGRATIONS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         AI_INTEGRATIONS_OPENAI_BASE_URL: https://api.openai.com/v1
+        SUMMARY_WEBHOOK_URL: ${{ secrets.SUMMARY_WEBHOOK_URL }}
       run: |
         # Change @bulletproofscale to your group and adjust days_ago (1 = yesterday)
-        python summarize.py @bulletproofscale 1 --deliver telegram
+        python summarize.py @bulletproofscale 1 --deliver telegram,webhook
